@@ -1,0 +1,6 @@
+/* Add to app/globals.css — IBM Plex Mono + Inter for the Mammba Verify dashboard */
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap");
+
+body {
+  background-color: #0b0f14;
+}

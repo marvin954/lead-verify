@@ -9,7 +9,7 @@ const mammbaVerifyTheme: Config["theme"] = {
       surface: {
         base: "#0B0F14",   // page background
         card: "#141B22",   // card / table surfaces
-        raised: "#1B2530", // hovered rows, popovers
+        raised: "#b1bbc6", // hovered rows, popovers
         border: "#232E3A",
       },
       ink: {

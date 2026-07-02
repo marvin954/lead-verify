@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 // app/dashboard/layout.tsx
 import { Sidebar } from "@/components/dashboard/Sidebar";
 

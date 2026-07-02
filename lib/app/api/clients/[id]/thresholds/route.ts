@@ -1,5 +1,6 @@
 // app/api/clients/[id]/thresholds/route.ts
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
 import { updateClientThresholds } from "@/lib/dashboard-data";

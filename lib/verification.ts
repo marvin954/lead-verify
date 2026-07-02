@@ -282,7 +282,7 @@ export async function checkHLR(phone?: string): Promise<CheckResult> {
   };
 }
 
-
+export function checkHoneypot(honeypotValue?: string): CheckResult {
   const triggered = !!honeypotValue && honeypotValue.trim().length > 0;
   return {
     check_type: "honeypot",
@@ -290,7 +290,6 @@ export async function checkHLR(phone?: string): Promise<CheckResult> {
     weight: triggered ? WEIGHTS.honeypot_triggered : 0,
   };
 }
-
 export function checkFormFillSpeed(ms?: number): CheckResult {
   if (ms == null) return { check_type: "form_fill_speed", passed: true, weight: 0 };
   const suspicious = ms < 2000; // filled in under 2 seconds

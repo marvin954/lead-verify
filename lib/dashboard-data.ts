@@ -7,12 +7,16 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
 let _supabase: SupabaseClient | null = null;
-function getSupabase(): SupabaseClient {
+
+// Returns null when Supabase env vars are not configured, so callers can
+// fall back to empty data instead of throwing "supabaseUrl is required".
+function getSupabase(): SupabaseClient | null {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return null;
+
   if (!_supabase) {
-    _supabase = createClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    _supabase = createClient(url, key);
   }
   return _supabase;
 }
@@ -48,10 +52,22 @@ export interface DashboardStats {
 // Stats for the top-of-dashboard summary cards
 // ------------------------------------------------------------------
 export async function getDashboardStats(clientId?: string): Promise<DashboardStats> {
+  const emptyStats: DashboardStats = {
+    total_today: 0,
+    verified_today: 0,
+    flagged_today: 0,
+    rejected_today: 0,
+    duplicate_today: 0,
+    avg_score_today: null,
+    verified_rate_7d: null,
+  };
+
   const since = new Date();
   since.setHours(0, 0, 0, 0);
 
   const supabase = getSupabase();
+  if (!supabase) return emptyStats;
+
   let query = supabase
     .from("leads")
     .select("status, score", { count: "exact" })
@@ -75,7 +91,7 @@ export async function getDashboardStats(clientId?: string): Promise<DashboardSta
   // 7-day verified rate for trend context
   const since7d = new Date();
   since7d.setDate(since7d.getDate() - 7);
-  let q7 = getSupabase()
+  let q7 = supabase
     .from("leads")
     .select("status")
     .gte("created_at", since7d.toISOString());
@@ -112,6 +128,8 @@ export async function getLeads(filter: LeadsFilter = {}): Promise<{ rows: LeadRo
   const { status = "all", clientId, search, page = 1, pageSize = 25 } = filter;
 
   const supabase = getSupabase();
+  if (!supabase) return { rows: [], total: 0 };
+
   let query = supabase
     .from("leads")
     .select("id, created_at, first_name, last_name, email, phone, company, source, client_id, status, score, clients(name)", {
@@ -159,6 +177,8 @@ export interface LeadDetail extends LeadRow {
 
 export async function getLeadDetail(leadId: string): Promise<LeadDetail | null> {
   const supabase = getSupabase();
+  if (!supabase) return null;
+
   const { data: lead } = await supabase
     .from("leads")
     .select("*, clients(name, threshold_verified, threshold_flagged)")
@@ -188,6 +208,8 @@ export async function getLeadDetail(leadId: string): Promise<LeadDetail | null> 
 // ------------------------------------------------------------------
 export async function getClients() {
   const supabase = getSupabase();
+  if (!supabase) return [];
+
   const { data } = await supabase
     .from("clients")
     .select("id, name, active, threshold_verified, threshold_flagged, webhook_url")
@@ -200,6 +222,8 @@ export async function updateClientThresholds(
   thresholds: { verified?: number; flagged?: number }
 ) {
   const supabase = getSupabase();
+  if (!supabase) return;
+
   await supabase
     .from("clients")
     .update({

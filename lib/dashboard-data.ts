@@ -232,3 +232,59 @@ export async function updateClientThresholds(
     })
     .eq("id", clientId);
 }
+
+// ------------------------------------------------------------------
+// Suppression list — known-bad emails/phones/domains/IPs
+// ------------------------------------------------------------------
+export type SuppressionType = "email" | "phone" | "domain" | "ip";
+
+export interface SuppressionRow {
+  id: string;
+  created_at: string;
+  value: string;
+  value_type: SuppressionType;
+  reason: string | null;
+  added_by: string | null;
+}
+
+export async function getSuppressionList(): Promise<SuppressionRow[]> {
+  const supabase = getSupabase();
+  if (!supabase) return [];
+
+  const { data } = await supabase
+    .from("suppression_list")
+    .select("id, created_at, value, value_type, reason, added_by")
+    .order("created_at", { ascending: false });
+  return (data ?? []) as SuppressionRow[];
+}
+
+export async function addSuppressionEntry(entry: {
+  value: string;
+  value_type: SuppressionType;
+  reason?: string | null;
+}): Promise<{ ok: boolean; error?: string }> {
+  const supabase = getSupabase();
+  if (!supabase) return { ok: false, error: "Database not configured." };
+
+  const { error } = await supabase.from("suppression_list").insert({
+    value: entry.value.trim().toLowerCase(),
+    value_type: entry.value_type,
+    reason: entry.reason?.trim() || null,
+    added_by: "dashboard",
+  });
+
+  if (error) {
+    // Unique index violation → already suppressed
+    if (error.code === "23505") return { ok: false, error: "That value is already suppressed." };
+    return { ok: false, error: error.message };
+  }
+  return { ok: true };
+}
+
+export async function removeSuppressionEntry(id: string): Promise<{ ok: boolean }> {
+  const supabase = getSupabase();
+  if (!supabase) return { ok: false };
+
+  await supabase.from("suppression_list").delete().eq("id", id);
+  return { ok: true };
+}

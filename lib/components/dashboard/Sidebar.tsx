@@ -3,6 +3,7 @@ import Link from "next/link";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Overview" },
+  { href: "/dashboard/upload", label: "CSV upload" },
   { href: "/dashboard?status=flagged", label: "Review queue" },
   { href: "/dashboard/clients", label: "Clients" },
   { href: "/dashboard/suppression", label: "Suppression list" },
